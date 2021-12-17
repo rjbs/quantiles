@@ -107,32 +107,30 @@ sub all_live_values ($self) {
   return \@values;
 }
 
-# nth percentile of a set of values = mean + (Zn * stddev)
-my %Z_for = (
-  90  => 1.282,
-  95  => 1.645,
-  99  => 2.326,
-);
+my @QUANTILES = qw(50 90 95 99);
 
 sub quantile_summary ($self) {
   my $values = $self->all_live_values;
 
+  # XXX Is this right?
   return { sum => 0, count => 0 } unless @$values;
 
-  my $sum   = sum0(@$values);
-  my $count = @$values;
-  my $mean  = $sum / $count;
+  my @values = sort {; $a <=> $b } @$values;
 
-  # This is the standard two-pass algorithm for computing stddev.
-  my $sum_sq_diff = sum0(map {; ($_ - $mean) ** 2 } @$values);
-  my $stddev      = sqrt($sum_sq_diff / (@$values - 1));
+  my $sum   = sum0(@values);
+  my $count = @values;
+  my %q;
+
+  for my $Q (@QUANTILES) {
+    my $i = $count * $Q / 100;
+    $i = int($i) + 1 if $i != int $i; # round up
+    $q{$Q} = $values[$i];
+  }
 
   return {
     sum   => $sum,
     count => $count,
-    mean  => $mean,
-    stddev => $stddev,
-    q => { map {; $_ => $mean + $Z_for{$_} * $stddev } keys %Z_for },
+    quantile => \%q,
   };
 }
 
