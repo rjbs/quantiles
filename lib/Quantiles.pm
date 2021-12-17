@@ -184,7 +184,7 @@ package Quantiles::SharedMem {
       push $window->{v}->@*, $value;
 
       $nv = encode_json($window);
-    } until shash_cset($self->{shash}, $key, $ov, $nv);
+    } until Hash::SharedMem::shash_cset($self->{shash}, $key, $ov, $nv);
 
     return;
   }
