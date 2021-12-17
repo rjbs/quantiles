@@ -18,7 +18,10 @@ package TestQuantiles {
 }
 
 subtest "the simplest quantile checks" => sub {
-  my $q = TestQuantiles->new({ %hundred_sec });
+  my $q = TestQuantiles->new({
+    %hundred_sec,
+    name => 'simple-test',
+  });
   $q->record($_) for 1 .. 100;
 
   cmp_deeply(
@@ -41,9 +44,11 @@ subtest "the simplest quantile checks" => sub {
 subtest "baic data gathering over time" => sub {
   $NOW = 0;
 
-
   # Remember:  default window count = 10, length = 10
-  my $q = TestQuantiles->new({ %hundred_sec });
+  my $q = TestQuantiles->new({
+    %hundred_sec,
+    name => 'timed-test',
+  });
 
   # After this runs, our windows should look like this:
   # t =  0, (1 .. 100,  2 ..  200)

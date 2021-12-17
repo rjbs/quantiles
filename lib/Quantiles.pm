@@ -9,8 +9,12 @@ use List::Util qw(sum0);
 
 # will want "window length" and "window count"
 sub new ($class, $arg = {}) {
+  my $name          = $arg->{name};
   my $window_length = $arg->{window_length} // 30; # seconds
   my $window_count  = $arg->{window_count}  // 10;
+
+  Carp::confess("can't create quantile group with no name")
+    unless length $name;
 
   Carp::confess("window_length must be a positive integer")
     unless $window_length > 0 && int($window_length) == $window_length;
@@ -145,7 +149,6 @@ package Quantiles::SharedMem {
     my $self  = $class->SUPER::new($arg);
 
     $self->{shash} = $arg->{shash};
-    $self->{name}  = $arg->{name};
 
     $self->_initialize;
 
