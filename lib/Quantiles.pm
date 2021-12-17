@@ -9,7 +9,7 @@ use List::Util qw(sum0);
 
 # will want "window length" and "window count"
 sub new ($class, $arg = {}) {
-  my $window_length = $arg->{window_length} // 10; # seconds
+  my $window_length = $arg->{window_length} // 30; # seconds
   my $window_count  = $arg->{window_count}  // 10;
 
   Carp::confess("window_length must be a positive integer")

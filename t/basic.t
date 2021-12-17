@@ -6,6 +6,8 @@ use Quantiles;
 use Test::Deep;
 use Test::More;
 
+my %hundred_sec = (window_length => 10, window_count => 10);
+
 my $NOW = 0;
 sub elapse { $NOW += $_[0] }
 
@@ -16,7 +18,7 @@ package TestQuantiles {
 }
 
 subtest "the simplest quantile checks" => sub {
-  my $q = TestQuantiles->new;
+  my $q = TestQuantiles->new({ %hundred_sec });
   $q->record($_) for 1 .. 100;
 
   cmp_deeply(
@@ -41,7 +43,7 @@ subtest "baic data gathering over time" => sub {
 
 
   # Remember:  default window count = 10, length = 10
-  my $q = TestQuantiles->new;
+  my $q = TestQuantiles->new({ %hundred_sec });
 
   # After this runs, our windows should look like this:
   # t =  0, (1 .. 100,  2 ..  200)
