@@ -231,6 +231,22 @@ package Quantiles::SharedMem {
 
     return \@windows;
   }
+
+  sub quantile_summary ($self) {
+    my $meta_key  = join q{-}, 'q', $self->{name}, 'meta';
+    my $meta_json = Hash::SharedMem::shash_get($self->{shash}, $meta_key);
+    my $meta = $meta_json ? decode_json($meta_json) : { count => 0, sum => 0 };
+
+    my %rv = (
+      count => $meta->{count},
+      sum   => $meta->{sum},
+    );
+
+    my $values = $self->all_live_values;
+    $self->_populate_quantiles(\%rv, $values) if @$values;
+
+    return \%rv;
+  }
 }
 
 1;
