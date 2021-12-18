@@ -176,21 +176,35 @@ package Quantiles::SharedMem {
 
     for my $i (0 .. $self->window_count - 1) {
       my $key = join q{-}, 'q', $self->{name}, $i, $count;
-      shash_set($self->{shash}, $key, $template);
+      Hash::SharedMem::shash_set($self->{shash}, $key, $template);
     }
 
     return;
   }
 
   sub append_to_window ($self, $ring_index, $start_time, $value) {
-    my $key = join q{-}, 'q', $self->{name}, $ring_index, $self->window_count;
+    my ($ov, $nv, $meta, $window);
 
-    my ($ov, $nv);
+    my $meta_key = join q{-}, 'q', $self->{name}, 'meta';
 
     do {
-      $ov = Hash::SharedMem::shash_get($self->{shash}, $key);
+      $ov = Hash::SharedMem::shash_get($self->{shash}, $meta_key);
 
-      my $window = $ov ? decode_json($ov) : undef;
+      $meta = $ov ? decode_json($ov) : { count => 0, sum => 0 };
+
+      $meta->{count} += 1;
+      $meta->{sum}   += $value;
+
+      $nv = encode_json($meta);
+    } until Hash::SharedMem::shash_cset($self->{shash}, $meta_key, $ov, $nv);
+
+    my $count = $self->window_count;
+    my $window_key = join q{-}, 'q', $self->{name}, $ring_index, $count;
+
+    do {
+      $ov = Hash::SharedMem::shash_get($self->{shash}, $window_key);
+
+      $window = $ov ? decode_json($ov) : undef;
 
       unless ($window && $window->{t} == $start_time) {
         $window = { t => $start_time, v => [] };
@@ -199,7 +213,7 @@ package Quantiles::SharedMem {
       push $window->{v}->@*, $value;
 
       $nv = encode_json($window);
-    } until Hash::SharedMem::shash_cset($self->{shash}, $key, $ov, $nv);
+    } until Hash::SharedMem::shash_cset($self->{shash}, $window_key, $ov, $nv);
 
     return;
   }
@@ -208,8 +222,9 @@ package Quantiles::SharedMem {
     my @windows;
     my $ov;
 
-    for my $i (0 .. $#windows) {
-      my $key = join q{-}, 'q', $self->{name}, $i, $self->window_count;
+    my $count = $self->window_count;
+    for my $i (0 .. $count) {
+      my $key = join q{-}, 'q', $self->{name}, $i, $count;
       $ov = Hash::SharedMem::shash_get($self->{shash}, $key);
       push @windows, $ov ? decode_json($ov) : ();
     }
