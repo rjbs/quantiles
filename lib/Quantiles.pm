@@ -164,7 +164,7 @@ package Quantiles::SharedMem {
 
     $self->_initialize;
 
-    return 1;
+    return $self;
   }
 
   # key format: q-name-Wnum-Wcount
