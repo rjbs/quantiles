@@ -23,6 +23,11 @@ sub new ($class, $arg = {}) {
     unless $window_count > 0 && int($window_count) == $window_count;
 
   my $self = {
+    name  => $name,
+
+    lifetime_count => 0,
+    lifetime_sum   => 0,
+
     window_length => $window_length,
     window_count  => $window_count,
 
@@ -35,6 +40,9 @@ sub new ($class, $arg = {}) {
 
   return $self;
 }
+
+sub lifetime_count  { $_[0]{lifetime_count} }
+sub lifetime_sum    { $_[0]{lifetime_sum}   }
 
 sub window_length { $_[0]{window_length} }
 sub window_count  { $_[0]{window_count}  }
@@ -84,6 +92,9 @@ sub append_to_window ($self, $ring_index, $start_time, $value) {
 
   push $window_ref->$*->{v}->@*, $value;
 
+  $self->{lifetime_count} += 1;
+  $self->{lifetime_sum}   += $value;
+
   return;
 }
 
@@ -113,16 +124,10 @@ sub all_live_values ($self) {
 
 my @QUANTILES = qw(50 90 95 99);
 
-sub quantile_summary ($self) {
-  my $values = $self->all_live_values;
-
-  # XXX Is this right?
-  return { sum => 0, count => 0 } unless @$values;
-
+sub _populate_quantiles ($self, $summary, $values) {
   my @values = sort {; $a <=> $b } @$values;
 
-  my $sum   = sum0(@values);
-  my $count = @values;
+  my $count = @$values;
   my %q;
 
   for my $Q (@QUANTILES) {
@@ -131,11 +136,18 @@ sub quantile_summary ($self) {
     $q{$Q} = $values[$i];
   }
 
-  return {
-    sum   => $sum,
-    count => $count,
-    quantile => \%q,
-  };
+  $summary->{quantile} = \%q;
+
+  return;
+}
+
+sub quantile_summary ($self) {
+  my %rv = (sum => $self->lifetime_sum, count => $self->lifetime_count);
+
+  my $values = $self->all_live_values;
+  $self->_populate_quantiles(\%rv, $values) if @$values;
+
+  return \%rv;
 }
 
 package Quantiles::SharedMem {
