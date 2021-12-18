@@ -51,7 +51,7 @@ subtest "the simplest quantile checks" => sub {
         %hundred_sec,
         name => 'simple-test',
       });
-      $q->record($_) for 1 .. 100;
+      $q->observe_summary($_) for 1 .. 100;
 
       my $summary = $q->quantile_summary;
 
@@ -91,7 +91,7 @@ subtest "basic data gathering over time" => sub {
       # t = 30, (7 .. 700,  8 ..  800)
       # t = 40, (9 .. 900, 10 .. 1000)
       for my $i (1 .. 10) {
-        $q->record($_ * $i) for (1 .. 100);
+        $q->observe_summary($_ * $i) for (1 .. 100);
         elapse(5);
       }
 

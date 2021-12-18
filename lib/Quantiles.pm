@@ -50,7 +50,7 @@ sub window_count  { $_[0]{window_count}  }
 # This exists to be replaced in tests. -- rjbs, 2021-12-16
 sub now { time }
 
-sub record ($self, $value) {
+sub observe_summary ($self, $value) {
   # Our data structure is C windows, each covering a window of time L seconds
   # long.
   #
